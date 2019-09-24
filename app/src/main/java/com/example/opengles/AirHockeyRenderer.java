@@ -3,6 +3,7 @@ package com.example.opengles;
 import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
+import android.opengl.Matrix;
 
 import com.example.opengles.util.LoggerConfig;
 import com.example.opengles.util.ShaderHelper;
@@ -35,6 +36,10 @@ public class AirHockeyRenderer implements GLSurfaceView.Renderer {
     private static final int STRIDE =(POSITION_COMPONENT_COUNT+COLOR_COMPONENT_COUNT)*BYTES_PER_FLOAT;
     private int aColorLocation;
 
+    private static final String U_MATRIX = "u_Matrix";
+    private final  float[] projectionMatrix = new float[16];
+    private int uMatrixLocation;
+
 
     public AirHockeyRenderer(Context context) {
         mContext = context;
@@ -42,17 +47,17 @@ public class AirHockeyRenderer implements GLSurfaceView.Renderer {
         float[] tableVerticesWithTriangles = {
 
                 0f, 0f, 1f, 1f, 1f,
-                -0.5f, -0.5f, 0.7f, 0.7f, 0.7f,
-                0.5f, -0.5f, 0.7f, 0.7f, 0.7f,
-                0.5f, 0.5f, 0.7f, 0.7f, 0.7f,
-                -0.5f, 0.5f, 0.7f, 0.7f, 0.7f,
-                -0.5f, -0.5f, 0.7f, 0.7f, 0.7f,
+                -0.5f, -0.8f, 0.7f, 0.7f, 0.7f,
+                0.5f, -0.8f, 0.7f, 0.7f, 0.7f,
+                0.5f, 0.8f, 0.7f, 0.7f, 0.7f,
+                -0.5f, 0.8f, 0.7f, 0.7f, 0.7f,
+                -0.5f, -0.8f, 0.7f, 0.7f, 0.7f,
 
                 -0.5f, 0f, 1f, 0f, 0f,
                 0.5f, 0f, 1f, 0f, 0f,
 
-                0f, -0.25f, 0f, 0f, 1f,
-                0f, 0.25f, 1f, 0f, 0f
+                0f, -0.4f, 0f, 0f, 1f,
+                0f, 0.4f, 1f, 0f, 0f
 
         };
 
@@ -102,13 +107,27 @@ public class AirHockeyRenderer implements GLSurfaceView.Renderer {
         GLES20.glVertexAttribPointer(aColorLocation, COLOR_COMPONENT_COUNT, GLES20.GL_FLOAT, false, STRIDE, vertexData);
         GLES20.glEnableVertexAttribArray(aColorLocation);
 
+        uMatrixLocation = GLES20.glGetUniformLocation(program,U_MATRIX);
+
     }
 
     @Override
-    public void onSurfaceChanged(GL10 gl10, int i, int i1) {
+    public void onSurfaceChanged(GL10 gl10, int width, int height) {
         // 在Surface被创建以后，每次Surface尺寸发生变化时，这个方法都会被GLSurfaceView调用到，
         // 比如横竖屏切换，尺寸就会发生变化
-        GLES20.glViewport(0, 0, i, i1); //设置视口尺寸，告诉opengl可以用来渲染的surface大小
+        GLES20.glViewport(0, 0, width, height); //设置视口尺寸，告诉opengl可以用来渲染的surface大小
+
+        float aspectRatio = width>height?
+                (float)width/(float)height:
+                (float)height/(float)width;
+
+        if (width>height){
+            Matrix.orthoM(projectionMatrix,0,-aspectRatio,aspectRatio,-1f,1f,-1f,1f);
+        }else {
+            Matrix.orthoM(projectionMatrix,0,-1f,1f,-aspectRatio,aspectRatio,-1f,1f);
+
+        }
+        GLES20.glUniformMatrix4fv(uMatrixLocation,1,false,projectionMatrix,0);
 
 
     }
