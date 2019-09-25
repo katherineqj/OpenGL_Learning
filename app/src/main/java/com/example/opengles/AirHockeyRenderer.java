@@ -6,6 +6,7 @@ import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 
 import com.example.opengles.util.LoggerConfig;
+import com.example.opengles.util.MatrixHelper;
 import com.example.opengles.util.ShaderHelper;
 import com.example.opengles.util.TextResourceReader;
 
@@ -39,6 +40,9 @@ public class AirHockeyRenderer implements GLSurfaceView.Renderer {
     private static final String U_MATRIX = "u_Matrix";
     private final  float[] projectionMatrix = new float[16];
     private int uMatrixLocation;
+
+    private final float[] modelMatrix = new float[16];
+
 
 
     public AirHockeyRenderer(Context context) {
@@ -116,17 +120,13 @@ public class AirHockeyRenderer implements GLSurfaceView.Renderer {
         // 在Surface被创建以后，每次Surface尺寸发生变化时，这个方法都会被GLSurfaceView调用到，
         // 比如横竖屏切换，尺寸就会发生变化
         GLES20.glViewport(0, 0, width, height); //设置视口尺寸，告诉opengl可以用来渲染的surface大小
-
-        float aspectRatio = width>height?
-                (float)width/(float)height:
-                (float)height/(float)width;
-
-        if (width>height){
-            Matrix.orthoM(projectionMatrix,0,-aspectRatio,aspectRatio,-1f,1f,-1f,1f);
-        }else {
-            Matrix.orthoM(projectionMatrix,0,-1f,1f,-aspectRatio,aspectRatio,-1f,1f);
-
-        }
+        MatrixHelper.perspectiveM(projectionMatrix,45,(float)width/(float)height,1f,10f);
+        Matrix.setIdentityM(modelMatrix,0);
+        Matrix.translateM(modelMatrix,0,0f,0f,-2.5f);
+        Matrix.rotateM(modelMatrix,0,-60f,1f,0f,0f);
+        final  float[] temp = new float[16];
+        Matrix.multiplyMM(temp,0,projectionMatrix,0,modelMatrix,0);
+        System.arraycopy(temp,0,projectionMatrix,0,temp.length);
         GLES20.glUniformMatrix4fv(uMatrixLocation,1,false,projectionMatrix,0);
 
 
